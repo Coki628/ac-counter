@@ -2,7 +2,13 @@
   "folders": [
     {
       "path": "."
-    }
+    },
+    {
+      "path": "./api"
+    },
+    {
+      "path": "./web"
+    },
   ],
   "settings": {
     "terminal.integrated.scrollback": 50000,

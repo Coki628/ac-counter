@@ -128,7 +128,9 @@ function App() {
       tweetText += `Solved By ${userName}\n`;
     }
     data.forEach((tableRow) => {
-      tweetText += `${tableRow.siteName}: ${tableRow.acCount}\n`;
+      if (tableRow.acCount) {
+        tweetText += `${tableRow.siteName}: ${tableRow.acCount}\n`;
+      }
     });
     tweetText += `Total: ${totalCount}\n`;
   
@@ -167,7 +169,7 @@ function App() {
         </form>
       </div>
       {isSubmitting && (
-        <div className="loading-layout">loading... <img src={`${process.env.PUBLIC_URL}/spinner.gif`}/></div>
+        <div className="loading-layout">loading... <img src={`${process.env.PUBLIC_URL}/spinner.gif`} alt="spinner" /></div>
       )}
       {!isSubmitting && tableRows && (
         <div className="result-wrapper">
