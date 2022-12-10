@@ -29,8 +29,10 @@ export const countCodeforces = async (userName: string): Promise<number | null> 
     const { data } = await axios.get(`https://codeforces.com/api/user.status?handle=${userName}`);
     if (data.result) {
       const submissions = data.result;
-      // problems[contestId][problemName]
-      const problems: any = {};
+      // problems[contestId][problemName] の2次元連想配列
+      // const problems: {[key: string]: {[key: string]: number}} = {};
+      // 連想配列の値にSet<string>
+      const problems: {[key: string]: Set<string>} = {};
       let res = 0;
       submissions.forEach((submission: any) => {
         const { verdict, testset, problem } = submission;
@@ -38,13 +40,13 @@ export const countCodeforces = async (userName: string): Promise<number | null> 
           return;
         }
         if (problems[problem.contestId] !== undefined) {
-          if (problems[problem.contestId][problem.name] === undefined) {
-            problems[problem.contestId][problem.name] = 1;
+          if (!problems[problem.contestId].has(problem.name)) {
+            problems[problem.contestId].add(problem.name);
             res++;
           }
         } else {
-          problems[problem.contestId] = {};
-          problems[problem.contestId][problem.name] = 1;
+          problems[problem.contestId] = new Set<string>();
+          problems[problem.contestId].add(problem.name);
           res++;
         }
       });
@@ -120,39 +122,40 @@ export const countLibrarychecker = async (userName: string): Promise<number | nu
 export const countLeetcode = async (userName: string): Promise<number | null> => {
   try {
     // ref: https://leetcode.com/discuss/general-discussion/1297705/is-there-public-api-endpoints-available-for-leetcode
-    // const { data } = await axios.post(
-    //   `${process.env.REACT_APP_LEETCODE_URL}/graphql`,
-    //   {
-    //     query: `
-    //       { matchedUser(username: "${userName}") {
-    //         username
-    //           submitStats: submitStatsGlobal {
-    //             acSubmissionNum {
-    //               difficulty
-    //               count
-    //               submissions
-    //             }
-    //           }
-    //         }
-    //       }
-    //     `
-    //   }
-    // );
-    // if (data.data?.matchedUser?.submitStats?.acSubmissionNum) {
-    //   for (const obj of data.data.matchedUser.submitStats.acSubmissionNum) {
-    //     if (obj.difficulty === 'All' && obj.count) {
-    //       return obj.count;
-    //     }
-    //   }
-    // }
-    // return null;
-
-    // ref: https://github.com/JeremyTsaii/leetcode-stats-api
-    const { data } = await axios.get(`https://leetcode-stats-api.herokuapp.com/${userName}`);
-    if (data.totalSolved) {
-      return data.totalSolved;
+    const { data } = await axios.post(
+      `${process.env.REACT_APP_LEETCODE_URL}/graphql`,
+      {
+        query: `
+          { matchedUser(username: "${userName}") {
+            username
+              submitStats: submitStatsGlobal {
+                acSubmissionNum {
+                  difficulty
+                  count
+                  submissions
+                }
+              }
+            }
+          }
+        `
+      }
+    );
+    if (data.data?.matchedUser?.submitStats?.acSubmissionNum) {
+      for (const obj of data.data.matchedUser.submitStats.acSubmissionNum) {
+        if (obj.difficulty === 'All' && obj.count) {
+          return obj.count;
+        }
+      }
     }
     return null;
+
+    // ref: https://github.com/JeremyTsaii/leetcode-stats-api
+    // herokuだったのでもう使えなくなったっぽい…。
+    // const { data } = await axios.get(`https://leetcode-stats-api.herokuapp.com/${userName}`);
+    // if (data.totalSolved) {
+    //   return data.totalSolved;
+    // }
+    // return null;
   } catch (err) {
     const { message } = err as Error;
     console.log(message);

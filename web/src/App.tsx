@@ -88,7 +88,6 @@ function App() {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [tweetText, setTweetText] = useState<string>('');
   const [tweetTextWithUrl, setTweetTextWithUrl] = useState<string>('');
-  // const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   // tableRowsの更新を確認してからスクロールさせる
   useEffect(() => {
@@ -103,33 +102,36 @@ function App() {
     inputs: Inputs,
     event?: React.BaseSyntheticEvent,
   ): Promise<void> => {
-    const data: TableRow[] = [];
     let totalCount: number = 0;
     let userName = '';
     let searchParams: { [key: string]: string } = {};
 
-    for (const oj of onlineJudges) {
-      const input = inputs[oj.key as keyof Inputs];
-      if (input) {
-        searchParams[oj.key] = input;
-        if (!userName) {
-          userName = input;
+    // 並列処理
+    const data: TableRow[] = await Promise.all(onlineJudges.map(
+      async (oj: OnlineJudge): Promise<TableRow> => {
+        const input = inputs[oj.key as keyof Inputs];
+        if (input) {
+          searchParams[oj.key] = input;
+          if (!userName) {
+            userName = input;
+          }
+          const count = await oj.counter(input);
+          if (count) {
+            totalCount += count;
+          }
+          return {siteName: oj.siteName, acCount: count};
+        } else {
+          return {siteName: '', acCount: null };
         }
-        const count = await oj.counter(input);
-        data.push({siteName: oj.siteName, acCount: count});
-        if (count) {
-          totalCount += count;
-        }
-      }
-    }
+    }));
 
     let tweetText = '';
     if (userName) {
       tweetText += `Solved By ${userName}\n`;
     }
-    data.forEach((tableRow) => {
-      if (tableRow.acCount) {
-        tweetText += `${tableRow.siteName}: ${tableRow.acCount}\n`;
+    data.forEach((tr: TableRow) => {
+      if (tr.acCount) {
+        tweetText += `${tr.siteName}: ${tr.acCount}\n`;
       }
     });
     tweetText += `Total: ${totalCount}\n`;
@@ -146,8 +148,9 @@ function App() {
       <h1>AC Counter</h1>
       <div>
         <form onSubmit={handleSubmit(onSubmit)}>
-          {onlineJudges.map((oj: OnlineJudge) =>
-            ((oj.key !== 'codechef' || process.env.NODE_ENV === 'development') &&
+          {onlineJudges
+            .filter((oj) => (oj.key !== 'codechef' && oj.key !== 'leetcode') || process.env.NODE_ENV === 'development')
+            .map((oj: OnlineJudge) => (
               <div key={oj.key}>
                 <label htmlFor={oj.key}>{oj.siteName}</label>
                 <input
@@ -181,11 +184,13 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {tableRows.map((tableRow: TableRow) =>
-                <tr key={tableRow.siteName}>
-                  <td>{tableRow.siteName}</td>
-                  <td>{tableRow.acCount ?? '-'}</td>
-                </tr>
+              {tableRows
+                .filter((tr: TableRow) => tr.siteName !== '')
+                .map((tr: TableRow) =>
+                  <tr key={tr.siteName}>
+                    <td>{tr.siteName}</td>
+                    <td>{tr.acCount ?? '-'}</td>
+                  </tr>
               )}
               <tr className="total-row">
                 <td>Total</td>
