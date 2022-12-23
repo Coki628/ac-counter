@@ -5,6 +5,14 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    // renderに移転
+    "redirects": [
+      {
+        "source": "/",
+        "destination": "https://ac-counter.onrender.com/",
+        "type": 301
+      }
     ]
   }
 }
