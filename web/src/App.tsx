@@ -1,60 +1,27 @@
+import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router-dom';
 import './App.css';
-import {
-  countAoj,
-  countAtcoder,
-  countCodechef,
-  countCodeforces,
-  countLeetcode,
-  countLibrarychecker,
-  countTopcoder,
-  countYukicoder,
-} from './logic';
-
-type Inputs = {
-  atcoder: string;
-  codeforces: string;
-  aoj: string;
-  yukicoder: string;
-  librarychecker: string;
-  leetcode: string;
-  codechef: string;
-  topcoder: string;
-};
-
-type TableRow = {
-  siteName: string;
-  acCount: number | null;
-};
-
-type OnlineJudge = {
-  key: string;
-  siteName: string;
-  counter: (userName: string) => Promise<number | null>;
-}
+import { countLibrarychecker } from './ac-counters';
+import { AcCountInput, AcCountResult, OnlineJudge } from './types';
 
 const onlineJudges: OnlineJudge[] = [
   {
     key: 'atcoder',
     siteName: 'AtCoder',
-    counter: countAtcoder,
   },
   {
     key: 'codeforces',
     siteName: 'Codeforces',
-    counter: countCodeforces,
   },
   {
     key: 'aoj',
     siteName: 'AOJ',
-    counter: countAoj,
   },
   {
     key: 'yukicoder',
     siteName: 'yukicoder',
-    counter: countYukicoder,
   },
   {
     key: 'librarychecker',
@@ -64,17 +31,14 @@ const onlineJudges: OnlineJudge[] = [
   {
     key: 'codechef',
     siteName: 'CodeChef',
-    counter: countCodechef,
   },
   {
     key: 'leetcode',
     siteName: 'LeetCode',
-    counter: countLeetcode,
   },
   {
     key: 'topcoder',
     siteName: 'TopCoder',
-    counter: countTopcoder,
   },
 ];
 
@@ -83,62 +47,69 @@ function App() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<Inputs>();
-  const [tableRows, setTableRows] = useState<TableRow[]>();
+  } = useForm<AcCountInput>();
+  const [acCountResults, setAcCountResults] = useState<AcCountResult[]>();
   const [totalCount, setTotalCount] = useState<number>(0);
   const [tweetText, setTweetText] = useState<string>('');
   const [tweetTextWithUrl, setTweetTextWithUrl] = useState<string>('');
   const [searchParams, setSearchParams] = useSearchParams();
-  // tableRowsの更新を確認してからスクロールさせる
+  // acCountResultsの更新を確認してからスクロールさせる
   useEffect(() => {
     document.getElementById('result-table')?.scrollIntoView();
-  }, [tableRows]);
+  }, [acCountResults]);
   useEffect(() => {
     /* eslint-disable no-restricted-globals */
     setTweetTextWithUrl(`${tweetText}${location.origin}${location.pathname}?${searchParams.toString()}`);
   }, [tweetText, searchParams]);
 
-  const onSubmit: SubmitHandler<Inputs> = async (
-    inputs: Inputs,
+  const onSubmit: SubmitHandler<AcCountInput> = async (
+    inputs: AcCountInput,
     event?: React.BaseSyntheticEvent,
   ): Promise<void> => {
     let totalCount: number = 0;
-    let userName = '';
+    let userName: string = '';
     let searchParams: { [key: string]: string } = {};
+    let tweetText: string = '';
 
-    // 並列処理
-    const data: TableRow[] = await Promise.all(onlineJudges.map(
-      async (oj: OnlineJudge): Promise<TableRow> => {
-        const input = inputs[oj.key as keyof Inputs];
+    const response = await axios.post(`${process.env.REACT_APP_API_ENDPOINT}/ac-count`, inputs);
+
+    const data: AcCountResult[] = [];
+    if (response.data.length === onlineJudges.length) {
+      for (let i = 0; i < onlineJudges.length; i++) {
+        const { key, siteName, counter } = onlineJudges[i];
+        let acCount = response.data[i];
+        const input = inputs[key as keyof AcCountInput];
         if (input) {
-          searchParams[oj.key] = input;
+          searchParams[key] = input;
+          if (counter) {
+            acCount = counter(input);
+          }
           if (!userName) {
             userName = input;
+          };
+          if (acCount) {
+            totalCount += acCount;
           }
-          const count = await oj.counter(input);
-          if (count) {
-            totalCount += count;
-          }
-          return {siteName: oj.siteName, acCount: count};
-        } else {
-          return {siteName: '', acCount: null };
+          data.push({siteName, acCount});
         }
-    }));
+      }
+    }
 
-    let tweetText = '';
     if (userName) {
       tweetText += `Solved By ${userName}\n`;
     }
-    data.forEach((tr: TableRow) => {
+    data.forEach((tr: AcCountResult) => {
       if (tr.acCount) {
         tweetText += `${tr.siteName}: ${tr.acCount}\n`;
       }
     });
-    tweetText += `Total: ${totalCount}\n`;
-  
+    if (tweetText) {
+      tweetText += `Total: ${totalCount}\n`;
+    }
+
     setTweetText(tweetText);
     setSearchParams(searchParams);
-    setTableRows(data);
+    setAcCountResults(data);
     setTotalCount(totalCount);
     event?.preventDefault();
   };
@@ -149,12 +120,11 @@ function App() {
       <div>
         <form onSubmit={handleSubmit(onSubmit)}>
           {onlineJudges
-            .filter((oj) => (oj.key !== 'codechef' && oj.key !== 'leetcode') || process.env.NODE_ENV === 'development')
             .map((oj: OnlineJudge) => (
               <div key={oj.key}>
                 <label htmlFor={oj.key}>{oj.siteName}</label>
                 <input
-                  {...register(oj.key as keyof Inputs)}
+                  {...register(oj.key as keyof AcCountInput)}
                   id={oj.key}
                   placeholder={`${oj.siteName} ID`}
                   defaultValue={searchParams.get(oj.key) ?? undefined}
@@ -174,7 +144,7 @@ function App() {
       {isSubmitting && (
         <div className="loading-layout">loading... <img src={`${process.env.PUBLIC_URL}/spinner.gif`} alt="spinner" /></div>
       )}
-      {!isSubmitting && tableRows && (
+      {!isSubmitting && acCountResults && (
         <div className="result-wrapper">
           <table id="result-table">
             <thead>
@@ -184,12 +154,11 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {tableRows
-                .filter((tr: TableRow) => tr.siteName !== '')
-                .map((tr: TableRow) =>
-                  <tr key={tr.siteName}>
-                    <td>{tr.siteName}</td>
-                    <td>{tr.acCount ?? '-'}</td>
+              {acCountResults
+                .map((res: AcCountResult) =>
+                  <tr key={res.siteName}>
+                    <td>{res.siteName}</td>
+                    <td>{res.acCount ?? '-'}</td>
                   </tr>
               )}
               <tr className="total-row">
