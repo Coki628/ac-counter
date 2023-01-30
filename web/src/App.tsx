@@ -52,6 +52,7 @@ function App() {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [tweetText, setTweetText] = useState<string>('');
   const [tweetTextWithUrl, setTweetTextWithUrl] = useState<string>('');
+  const [userName, setUserName] = useState<string>('');
   const [searchParams, setSearchParams] = useSearchParams();
   // acCountResultsの更新を確認してからスクロールさせる
   useEffect(() => {
@@ -61,6 +62,9 @@ function App() {
     /* eslint-disable no-restricted-globals */
     setTweetTextWithUrl(`${tweetText}${location.origin}${location.pathname}?${searchParams.toString()}`);
   }, [tweetText, searchParams]);
+  useEffect(() => {
+    document.title = userName ?  `AC Counter - ${userName}` : "AC Counter";
+  }, [userName]);
 
   const onSubmit: SubmitHandler<AcCountInput> = async (
     inputs: AcCountInput,
@@ -111,6 +115,7 @@ function App() {
     setSearchParams(searchParams);
     setAcCountResults(data);
     setTotalCount(totalCount);
+    setUserName(userName);
     event?.preventDefault();
   };
 
