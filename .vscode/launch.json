@@ -7,9 +7,28 @@
     {
       "type": "chrome",
       "request": "launch",
-      "name": "Launch Chrome against localhost",
+      "name": "web",
       "url": "http://localhost:3000",
       "webRoot": "${workspaceFolder}/web"
-    }
+    },
+    // 参考：https://zenn.dev/75asa/articles/how2debug-nestjs-on-vsc
+    {
+      "type": "node",
+      "name": "api",
+      "request": "launch",
+      "runtimeArgs": [
+          "run",
+          "start:debug"
+      ],
+      "runtimeVersion": "16",
+      "runtimeExecutable": "yarn",
+      "skipFiles": [
+          "<node_internals>/**"
+      ],
+      "sourceMaps": true, // tsconfig.jsonのsourceMapをtrueにしておく必要がある
+      "envFile": "${workspaceFolder}/api/.env",
+      "cwd": "${workspaceFolder}/api",
+      "console": "integratedTerminal",
+  },
   ]
 }
