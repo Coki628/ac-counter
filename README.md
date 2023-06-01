@@ -22,3 +22,14 @@ cd web
 yarn start
 ```
 
+## 省略コマンド
+
+自分の作業用に作ってるだけなので、他環境(Macとか)で動くかは知らない。  
+(当方はWin端末のWSL)
+
+```bash
+# api
+cd api && ./a
+# web
+cd web && ./a
+```
