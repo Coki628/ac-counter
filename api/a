@@ -1,0 +1,3 @@
+#!/bin/bash -i
+
+nvm use 16 && yarn start:dev
