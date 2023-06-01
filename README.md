@@ -9,6 +9,7 @@
 ### ローカル実行
 
 ```bash
+cd api
 yarn start:dev
 ```
 
@@ -17,6 +18,7 @@ yarn start:dev
 ### ローカル実行
 
 ```bash
+cd web
 yarn start
 ```
 
