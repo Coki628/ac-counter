@@ -4,6 +4,6 @@ import { AcCountService } from './ac-count.service';
 
 @Module({
   controllers: [AcCountController],
-  providers: [AcCountService]
+  providers: [AcCountService],
 })
 export class AcCountModule {}
