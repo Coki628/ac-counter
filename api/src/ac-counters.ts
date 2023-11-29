@@ -1,9 +1,11 @@
-import axios from "axios";
-import { load } from "cheerio";
+import axios from 'axios';
+import { Element, load } from 'cheerio';
 
 export const countAtcoder = async (userName: string): Promise<number | null> => {
   try {
-    const { data }= await axios.get(`https://kenkoooo.com/atcoder/atcoder-api/v3/user/ac_rank?user=${userName}`);
+    const { data } = await axios.get(
+      `https://kenkoooo.com/atcoder/atcoder-api/v3/user/ac_rank?user=${userName}`
+    );
     if (data.count) {
       return data.count;
     }
@@ -15,35 +17,24 @@ export const countAtcoder = async (userName: string): Promise<number | null> => 
   }
 };
 
-// beetさんのやつをほぼそのまま流用
+// プロフィールページからのスクレイピングにした
 export const countCodeforces = async (userName: string): Promise<number | null> => {
-  // ref: https://github.com/beet-aizu/rating-history/blob/master/request.js
   try {
-    const { data } = await axios.get(`https://codeforces.com/api/user.status?handle=${userName}`);
-    if (data.result) {
-      const submissions = data.result;
-      // problems[contestId][problemName] の2次元連想配列
-      // const problems: {[key: string]: {[key: string]: number}} = {};
-      // 連想配列の値にSet<string>
-      const problems: {[key: string]: Set<string>} = {};
-      let res = 0;
-      submissions.forEach((submission: any) => {
-        const { verdict, testset, problem } = submission;
-        if (verdict !== "OK" || testset !== "TESTS") {
-          return;
+    const { data } = await axios.get(`https://codeforces.com/profile/${userName}`);
+    const $ = load(data);
+    const el: Element | undefined = $('div._UserActivityFrame_counterDescription')
+      .toArray()
+      .find((el) => $(el).text().trim() === 'solved for all time');
+    if (el) {
+      const txt = $(el).prev().text().trim();
+      // '1788 problems'
+      const i = txt.indexOf(' ');
+      if (i !== -1) {
+        const count = Number(txt.substring(0, i));
+        if (!isNaN(count)) {
+          return count;
         }
-        if (problems[problem.contestId] !== undefined) {
-          if (!problems[problem.contestId].has(problem.name)) {
-            problems[problem.contestId].add(problem.name);
-            res++;
-          }
-        } else {
-          problems[problem.contestId] = new Set<string>();
-          problems[problem.contestId].add(problem.name);
-          res++;
-        }
-      });
-      return res;
+      }
     }
     return null;
   } catch (err) {
@@ -85,10 +76,8 @@ export const countYukicoder = async (userName: string): Promise<number | null> =
 export const countLeetcode = async (userName: string): Promise<number | null> => {
   try {
     // ref: https://leetcode.com/discuss/general-discussion/1297705/is-there-public-api-endpoints-available-for-leetcode
-    const { data } = await axios.post(
-      `https://leetcode.com/graphql`,
-      {
-        query: `
+    const { data } = await axios.post(`https://leetcode.com/graphql`, {
+      query: `
           { matchedUser(username: "${userName}") {
             username
               submitStats: submitStatsGlobal {
@@ -100,9 +89,8 @@ export const countLeetcode = async (userName: string): Promise<number | null> =>
               }
             }
           }
-        `
-      }
-    );
+        `,
+    });
     if (data.data?.matchedUser?.submitStats?.acSubmissionNum) {
       for (const obj of data.data.matchedUser.submitStats.acSubmissionNum) {
         if (obj.difficulty === 'All' && obj.count) {
@@ -125,18 +113,26 @@ export const countCodechef = async (userName: string): Promise<number | null> =>
     //      https://www.twilio.com/blog/4-tools-for-web-scraping-in-node-js-jp
     const { data } = await axios.get(`https://www.codechef.com/users/${userName}`);
     const $ = load(data);
-    const txt: string | undefined = $('.problems-solved h5')
-      .map((i, el) => $(el).text())
+    const txt: string | undefined = $('script[type="text/javascript"]')
+      .map((i, el) => $(el).text().trim())
       .toArray()
-      .find((txt) => txt.startsWith('Fully Solved'))
-      ?.trim();
+      .find((txt) => txt.startsWith('jQuery(document)'));
     if (txt) {
-      const l: number = txt.indexOf('(');
-      const r: number = txt.lastIndexOf(')');
-      if (l !== -1 && r !== -1 && l < r) {
-        const count = Number(txt.substring(l+1, r));
-        if (!isNaN(count)) {
-          return count;
+      const solutionsAccepted = 'solutions_accepted';
+      const i = txt.indexOf(solutionsAccepted);
+      if (i !== -1) {
+        // 2回目の'solutions_accepted'
+        const j = txt.indexOf(solutionsAccepted, i + 1);
+        if (j !== -1) {
+          // 'solutions_accepted',y:44,color...
+          const l = j + solutionsAccepted.length + 4;
+          const r = txt.indexOf(',', l);
+          if (r !== -1) {
+            const count = Number(txt.substring(l, r));
+            if (!isNaN(count)) {
+              return count;
+            }
+          }
         }
       }
     }
@@ -152,9 +148,11 @@ export const countCodechef = async (userName: string): Promise<number | null> =>
 export const countTopcoder = async (userName: string): Promise<number | null> => {
   // ref: https://github.com/beet-aizu/rating-history/blob/master/request.js
   try {
-    const { data } = await axios.get(`https://api.topcoder.com/v2/users/${userName}/statistics/data/srm`);
+    const { data } = await axios.get(
+      `https://api.topcoder.com/v2/users/${userName}/statistics/data/srm`
+    );
     let count = 0;
-    const div1 = data['Divisions']['Division I' ]['Level Total'];
+    const div1 = data['Divisions']['Division I']['Level Total'];
     const div2 = data['Divisions']['Division II']['Level Total'];
     count += div1['submitted'];
     count -= div1['failedChallenge'];

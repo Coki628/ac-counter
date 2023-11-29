@@ -55,18 +55,18 @@ const onlineJudges: OnlineJudge[] = [
 
 @Injectable()
 export class AcCountService {
-
   async getAcCount(inputs: AcCountInput): Promise<(number | null)[]> {
     // 並列処理
-    const data: (number | null)[] = await Promise.all(onlineJudges.map(
-      async (oj: OnlineJudge): Promise<(number | null)> => {
+    const data: (number | null)[] = await Promise.all(
+      onlineJudges.map(async (oj: OnlineJudge): Promise<number | null> => {
         const input = inputs[oj.key as keyof AcCountInput];
         if (input && oj.counter) {
           return await oj.counter(input);
         } else {
           return null;
         }
-    }));
+      })
+    );
 
     return data;
   }
