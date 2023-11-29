@@ -65,7 +65,7 @@ export class AcCountService {
         } else {
           return null;
         }
-      }),
+      })
     );
 
     return data;

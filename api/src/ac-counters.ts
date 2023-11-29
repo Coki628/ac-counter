@@ -1,12 +1,10 @@
 import axios from 'axios';
 import { Element, load } from 'cheerio';
 
-export const countAtcoder = async (
-  userName: string,
-): Promise<number | null> => {
+export const countAtcoder = async (userName: string): Promise<number | null> => {
   try {
     const { data } = await axios.get(
-      `https://kenkoooo.com/atcoder/atcoder-api/v3/user/ac_rank?user=${userName}`,
+      `https://kenkoooo.com/atcoder/atcoder-api/v3/user/ac_rank?user=${userName}`
     );
     if (data.count) {
       return data.count;
@@ -20,17 +18,11 @@ export const countAtcoder = async (
 };
 
 // プロフィールページからのスクレイピングにした
-export const countCodeforces = async (
-  userName: string,
-): Promise<number | null> => {
+export const countCodeforces = async (userName: string): Promise<number | null> => {
   try {
-    const { data } = await axios.get(
-      `https://codeforces.com/profile/${userName}`,
-    );
+    const { data } = await axios.get(`https://codeforces.com/profile/${userName}`);
     const $ = load(data);
-    const el: Element | undefined = $(
-      'div._UserActivityFrame_counterDescription',
-    )
+    const el: Element | undefined = $('div._UserActivityFrame_counterDescription')
       .toArray()
       .find((el) => $(el).text().trim() === 'solved for all time');
     if (el) {
@@ -54,9 +46,7 @@ export const countCodeforces = async (
 
 export const countAoj = async (userName: string): Promise<number | null> => {
   try {
-    const { data } = await axios.get(
-      `https://judgeapi.u-aizu.ac.jp/users/${userName}`,
-    );
+    const { data } = await axios.get(`https://judgeapi.u-aizu.ac.jp/users/${userName}`);
     if (data.status?.solved) {
       return data.status.solved;
     }
@@ -68,13 +58,9 @@ export const countAoj = async (userName: string): Promise<number | null> => {
   }
 };
 
-export const countYukicoder = async (
-  userName: string,
-): Promise<number | null> => {
+export const countYukicoder = async (userName: string): Promise<number | null> => {
   try {
-    const { data } = await axios.get(
-      `https://yukicoder.me/api/v1/user/name/${userName}`,
-    );
+    const { data } = await axios.get(`https://yukicoder.me/api/v1/user/name/${userName}`);
     if (data.Solved) {
       return data.Solved;
     }
@@ -87,9 +73,7 @@ export const countYukicoder = async (
 };
 
 // 公式らしきGraphQLから取る
-export const countLeetcode = async (
-  userName: string,
-): Promise<number | null> => {
+export const countLeetcode = async (userName: string): Promise<number | null> => {
   try {
     // ref: https://leetcode.com/discuss/general-discussion/1297705/is-there-public-api-endpoints-available-for-leetcode
     const { data } = await axios.post(`https://leetcode.com/graphql`, {
@@ -123,15 +107,11 @@ export const countLeetcode = async (
 };
 
 // 公式APIが一般公開を止めているらしく、ユーザーのプロフィールページからスクレイピングした。
-export const countCodechef = async (
-  userName: string,
-): Promise<number | null> => {
+export const countCodechef = async (userName: string): Promise<number | null> => {
   try {
     // ref: https://qiita.com/Syoitu/items/6a136e3b8d2fb65e51a2
     //      https://www.twilio.com/blog/4-tools-for-web-scraping-in-node-js-jp
-    const { data } = await axios.get(
-      `https://www.codechef.com/users/${userName}`,
-    );
+    const { data } = await axios.get(`https://www.codechef.com/users/${userName}`);
     const $ = load(data);
     const txt: string | undefined = $('script[type="text/javascript"]')
       .map((i, el) => $(el).text().trim())
@@ -165,13 +145,11 @@ export const countCodechef = async (
 };
 
 // beetさんのやつをほぼそのまま流用
-export const countTopcoder = async (
-  userName: string,
-): Promise<number | null> => {
+export const countTopcoder = async (userName: string): Promise<number | null> => {
   // ref: https://github.com/beet-aizu/rating-history/blob/master/request.js
   try {
     const { data } = await axios.get(
-      `https://api.topcoder.com/v2/users/${userName}/statistics/data/srm`,
+      `https://api.topcoder.com/v2/users/${userName}/statistics/data/srm`
     );
     let count = 0;
     const div1 = data['Divisions']['Division I']['Level Total'];
