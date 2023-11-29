@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { load } from 'cheerio';
+import { Element, load } from 'cheerio';
 
 export const countAtcoder = async (
   userName: string,
@@ -19,39 +19,30 @@ export const countAtcoder = async (
   }
 };
 
-// beetさんのやつをほぼそのまま流用
+// プロフィールページからのスクレイピングにした
 export const countCodeforces = async (
   userName: string,
 ): Promise<number | null> => {
-  // ref: https://github.com/beet-aizu/rating-history/blob/master/request.js
   try {
     const { data } = await axios.get(
-      `https://codeforces.com/api/user.status?handle=${userName}`,
+      `https://codeforces.com/profile/${userName}`,
     );
-    if (data.result) {
-      const submissions = data.result;
-      // problems[contestId][problemName] の2次元連想配列
-      // const problems: {[key: string]: {[key: string]: number}} = {};
-      // 連想配列の値にSet<string>
-      const problems: { [key: string]: Set<string> } = {};
-      let res = 0;
-      submissions.forEach((submission: any) => {
-        const { verdict, testset, problem } = submission;
-        if (verdict !== 'OK' || testset !== 'TESTS') {
-          return;
+    const $ = load(data);
+    const el: Element | undefined = $(
+      'div._UserActivityFrame_counterDescription',
+    )
+      .toArray()
+      .find((el) => $(el).text().trim() === 'solved for all time');
+    if (el) {
+      const txt = $(el).prev().text().trim();
+      // '1788 problems'
+      const i = txt.indexOf(' ');
+      if (i !== -1) {
+        const count = Number(txt.substring(0, i));
+        if (!isNaN(count)) {
+          return count;
         }
-        if (problems[problem.contestId] !== undefined) {
-          if (!problems[problem.contestId].has(problem.name)) {
-            problems[problem.contestId].add(problem.name);
-            res++;
-          }
-        } else {
-          problems[problem.contestId] = new Set<string>();
-          problems[problem.contestId].add(problem.name);
-          res++;
-        }
-      });
-      return res;
+      }
     }
     return null;
   } catch (err) {
