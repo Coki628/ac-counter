@@ -125,18 +125,26 @@ export const countCodechef = async (userName: string): Promise<number | null> =>
     //      https://www.twilio.com/blog/4-tools-for-web-scraping-in-node-js-jp
     const { data } = await axios.get(`https://www.codechef.com/users/${userName}`);
     const $ = load(data);
-    const txt: string | undefined = $('.problems-solved h5')
-      .map((i, el) => $(el).text())
-      .toArray()
-      .find((txt) => txt.startsWith('Fully Solved'))
-      ?.trim();
+    const txt: string | undefined = $('script[type="text/javascript"]')
+    .map((i, el) => $(el).text().trim())
+    .toArray()
+    .find((txt) => txt.startsWith('jQuery(document)'));
     if (txt) {
-      const l: number = txt.indexOf('(');
-      const r: number = txt.lastIndexOf(')');
-      if (l !== -1 && r !== -1 && l < r) {
-        const count = Number(txt.substring(l+1, r));
-        if (!isNaN(count)) {
-          return count;
+      const solutionsAccepted = 'solutions_accepted';
+      const i = txt.indexOf(solutionsAccepted);
+      if (i !== -1) {
+        // 2回目の'solutions_accepted'
+        const j = txt.indexOf(solutionsAccepted, i + 1);
+        if (j !== -1) {
+          // 'solutions_accepted',y:44,color...
+          const l = j + solutionsAccepted.length + 4;
+          const r = txt.indexOf(',', l);
+          if (r !== -1) {
+            const count = Number(txt.substring(l, r));
+            if (!isNaN(count)) {
+              return count;
+            }
+          }
         }
       }
     }
