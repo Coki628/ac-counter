@@ -36,10 +36,11 @@ const onlineJudges: OnlineJudge[] = [
     key: 'leetcode',
     siteName: 'LeetCode',
   },
-  {
-    key: 'topcoder',
-    siteName: 'TopCoder',
-  },
+  // ※v2のAPIが消えてしまったっぽいので、利用停止
+  // {
+  //   key: 'topcoder',
+  //   siteName: 'TopCoder',
+  // },
 ];
 
 function App() {
