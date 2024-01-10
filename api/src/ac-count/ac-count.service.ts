@@ -46,11 +46,12 @@ const onlineJudges: OnlineJudge[] = [
     siteName: 'LeetCode',
     counter: countLeetcode,
   },
-  {
-    key: 'topcoder',
-    siteName: 'TopCoder',
-    counter: countTopcoder,
-  },
+  // ※v2のAPIが消えてしまったっぽいので、利用停止
+  // {
+  //   key: 'topcoder',
+  //   siteName: 'TopCoder',
+  //   counter: countTopcoder,
+  // },
 ];
 
 @Injectable()

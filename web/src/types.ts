@@ -6,7 +6,7 @@ export type AcCountInput = {
   librarychecker?: string;
   leetcode?: string;
   codechef?: string;
-  topcoder?: string;
+  // topcoder?: string;
 };
 
 export type AcCountResult = {
