@@ -144,22 +144,21 @@ export const countCodechef = async (userName: string): Promise<number | null> =>
   }
 };
 
-// beetさんのやつをほぼそのまま流用
+// v2が使えなくなり、v5のAPIから取得できるようにした。
 export const countTopcoder = async (userName: string): Promise<number | null> => {
-  // ref: https://github.com/beet-aizu/rating-history/blob/master/request.js
   try {
-    const { data } = await axios.get(
-      `https://api.topcoder.com/v2/users/${userName}/statistics/data/srm`
-    );
+    const { data } = await axios.get(`https://api.topcoder.com/v5/members?handle=${userName}`);
     let count = 0;
-    const div1 = data['Divisions']['Division I']['Level Total'];
-    const div2 = data['Divisions']['Division II']['Level Total'];
-    count += div1['submitted'];
-    count -= div1['failedChallenge'];
-    count -= div1['failedSys.Test'];
-    count += div2['submitted'];
-    count -= div2['failedChallenge'];
-    count -= div2['failedSys.Test'];
+    if (data[0].stats[0].DATA_SCIENCE.SRM.division1) {
+      count += data[0].stats[0].DATA_SCIENCE.SRM.division1.reduce((acc: number, cur: any) => {
+        return acc + cur.problemsSubmitted - cur.problemsSysByTest - cur.problemsFailed;
+      }, 0);
+    }
+    if (data[0].stats[0].DATA_SCIENCE.SRM.division2) {
+      count += data[0].stats[0].DATA_SCIENCE.SRM.division2.reduce((acc: number, cur: any) => {
+        return acc + cur.problemsSubmitted - cur.problemsSysByTest - cur.problemsFailed;
+      }, 0);
+    }
     return count;
   } catch (err) {
     const { message } = err as Error;
