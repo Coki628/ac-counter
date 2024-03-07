@@ -3,6 +3,7 @@ type UserStatistics = {
 };
 
 // beetさんのやつをほぼそのまま流用
+// see: https://github.com/yosupo06/library-checker-frontend/issues/42
 export const countLibrarychecker = (userName: string): number | null => {
   try {
     // ※通常はページ表示から1秒もかからないくらいでmain.jsからここに結果が読み込まれる
