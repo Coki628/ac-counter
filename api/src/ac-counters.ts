@@ -72,33 +72,40 @@ export const countYukicoder = async (userName: string): Promise<number | null> =
   }
 };
 
-// 公式らしきGraphQLから取る
+// 有志のAPIで良い感じのがあったのでそれを使う
 export const countLeetcode = async (userName: string): Promise<number | null> => {
   try {
-    // ref: https://leetcode.com/discuss/general-discussion/1297705/is-there-public-api-endpoints-available-for-leetcode
-    const { data } = await axios.post(`https://leetcode.com/graphql`, {
-      query: `
-          { matchedUser(username: "${userName}") {
-            username
-              submitStats: submitStatsGlobal {
-                acSubmissionNum {
-                  difficulty
-                  count
-                  submissions
-                }
-              }
-            }
-          }
-        `,
-    });
-    if (data.data?.matchedUser?.submitStats?.acSubmissionNum) {
-      for (const obj of data.data.matchedUser.submitStats.acSubmissionNum) {
-        if (obj.difficulty === 'All' && obj.count) {
-          return obj.count;
-        }
-      }
+    // see: https://github.com/JeremyTsaii/leetcode-stats-apihttps://github.com/JeremyTsaii/leetcode-stats-api
+    const { data } = await axios.get(`https://leetcode-stats-api.herokuapp.com/${userName}`);
+    if (data.totalSolved) {
+      return data.totalSolved;
     }
     return null;
+    // 公式APIっぽいGraphQL(なんか見れなくなった)
+    // see: https://leetcode.com/discuss/general-discussion/1297705/is-there-public-api-endpoints-available-for-leetcode
+    // const { data } = await axios.post(`https://leetcode.com/graphql`, {
+    //   query: `
+    //       { matchedUser(username: "${userName}") {
+    //         username
+    //           submitStats: submitStatsGlobal {
+    //             acSubmissionNum {
+    //               difficulty
+    //               count
+    //               submissions
+    //             }
+    //           }
+    //         }
+    //       }
+    //     `,
+    // });
+    // if (data.data?.matchedUser?.submitStats?.acSubmissionNum) {
+    //   for (const obj of data.data.matchedUser.submitStats.acSubmissionNum) {
+    //     if (obj.difficulty === 'All' && obj.count) {
+    //       return obj.count;
+    //     }
+    //   }
+    // }
+    // return null;
   } catch (err) {
     const { message } = err as Error;
     console.log(message);
