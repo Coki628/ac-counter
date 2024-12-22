@@ -3,10 +3,31 @@
 ## 事前準備
 
 - Node 16
+- yarn
 
-## API
+## 導入
 
-### ローカル実行
+### API
+
+```bash
+cd api
+nvm use 16
+yarn
+cp .env.sample .env
+```
+
+### Web
+
+```bash
+cd web
+nvm use 16
+yarn
+cp .env.sample .env.local
+```
+
+## ローカル実行
+
+### API
 
 ```bash
 cd api
@@ -15,7 +36,6 @@ yarn start:dev
 
 ## Web
 
-### ローカル実行
 
 ```bash
 cd web
